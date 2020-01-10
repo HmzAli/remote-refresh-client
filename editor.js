@@ -1,21 +1,31 @@
 import io from 'socket.io-client'
 
 const config = {
-    liveReloadServer: 'http://localhost:9000'
+    liveReloadServer: 'http://localhost:3000'
 }
 
-class LiveReloadEditor {
+class LiveReloadClient {
     constructor(lrServer) {
         this.socket = new io(lrServer)
+        let site = this.getSite()
+        if (!!site) {
+            this.socket.emit('editor:register', site)
+        } else {
+            this.setUp()
+        }
     }
 
-    setup() {
-        const newSite = confirm('Enter the url of the site to live reload, e.g. http://mywebsite.com')
+    getSite() {
+        return localStorage.getItem('lrSite')
+    }
+
+    setUp() {
+        const newSite = prompt('Enter the url of the site to live reload, e.g. http://mywebsite.com')
         if (!newSite) {
             return
         }
 
-        if (localStorage.get('lrSite') === newSite) {
+        if (localStorage.getItem('lrSite') === newSite) {
             return alert('Site already configured for live reloading')
         }
 
@@ -23,13 +33,13 @@ class LiveReloadEditor {
         this.socket.emit('editor:register', newSite)
     }
 
-    reloadSite() {
-        this.socket.emit('editor:reloadSite')
+    reload() {
+        this.socket.emit('editor:reload')
     }
 
-    refreshSiteCSS() {
+    refreshCSS() {
         this.socket.emit('editor:refreshCSS')
     }
 }
 
-export default new LiveReloadEditor(config.liveReloadServer);
+export default new LiveReloadClient(config.liveReloadServer);

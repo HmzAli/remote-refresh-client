@@ -4,6 +4,10 @@ class LivePage {
         this.stylesheets = this.document.querySelectorAll('link[rel="stylesheet"]')
     }
 
+    get siteURL() {
+        return document.location.host
+    }
+
     reload() {
         this.document.location.reload()
     }
@@ -15,16 +19,19 @@ class LivePage {
 
 class RemoteRefreshClient {
     constructor (lrServer) {
-        this.socket = new io(lrServer)
-        this.webpage = new LivePage()
-        this.addEventListeners();
-    }
+        this.webpage = new LivePage(document)
+        this.socket = io(lrServer)
+        this.socket.on('connect', socket => {
+            console.log('connected')
+            this.socket.emit('site:register', this.webpage.siteURL)
+        })
 
-    addEventListeners() {
-        this.socket.on('connected', () => this.socket.emit('site:register', siteURL))
-        this.socket.on('reload', () => this.webpage.reload())
-        this.socket.on('refreshCSS', () => this.webpage.refreshCSS())
+        this.socket.on('site:reload', () => { 
+            console.log('reloading site'); 
+            this.webpage.reload()
+        })
+        this.socket.on('site:refreshCSS', () => this.webpage.refreshCSS())
     }
 }
 
-new RemoteRefreshClient('http://localhost:8080')
+new RemoteRefreshClient('http://localhost:3000')
